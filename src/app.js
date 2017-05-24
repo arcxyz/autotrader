@@ -79,15 +79,15 @@ module.exports.startTrading = function startTrading() {
 
     function makeProfit() {
         kraken.getTradesHistory((err, data) => {
-            const lastTrade = data.trades[Object.keys(data.trades)[0]]
+            const lastTrade = data.trades[Object.keys(data.trades)[0]];
 
-            if (lastTrade.pair !== kraken.pair) return log.error('We cannot continue, the last trade was for', lastTrade.pair, 'and we want', kraken.pair)
+            if (lastTrade.pair !== kraken.pair) return log.error('We cannot continue, the last trade was for', lastTrade.pair, 'and we want', kraken.pair);
 
             kraken.getPortfolio((err, data) => {
                 if (err) return log.error('There was an error getting funds', JSON.stringify(err));
 
-                const availableLTC = data.filter((item) => item.name === 'LTC').pop().amount;
-                const availableEUR = data.filter((item) => item.name === 'EUR').pop().amount;
+                const availableLTC = data.filter((item) => item.name === config.asset).pop().amount;
+                const availableEUR = data.filter((item) => item.name === config.currency).pop().amount;
 
                 if (availableEUR > 0) {
                     // we need to buy some LTC
@@ -132,8 +132,8 @@ module.exports.startTrading = function startTrading() {
     }
 
     function boot() {
-        log.debug('#############################################')
-        log.debug('Starting at', new Date(), 'Trading', config.asset)
+        log.debug('#############################################');
+        log.debug('Starting at', new Date(), 'Trading', config.asset);
         getPendingOrders();
     }
 
