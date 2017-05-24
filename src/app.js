@@ -17,10 +17,10 @@ module.exports.startTrading = function startTrading() {
         currency: process.env.AUTOTRADER_CURRENCY,
         asset: process.env.AUTOTRADER_ASSET,
 
-        lowDiff: process.env.AUTOTRADER_LOW_DIFF || 2,
-        highDiff: process.env.AUTOTRADER_HIGH_DIFF || 2,
+        lowDiff: parseInt(process.env.AUTOTRADER_LOW_DIFF) || 2,
+        highDiff: parseInt(process.env.AUTOTRADER_HIGH_DIFF) || 2,
 
-        timeout: process.env.AUTOTRADER_TIMEOUT || 10000,
+        timeout: parseInt(process.env.AUTOTRADER_TIMEOUT) || 10000,
         simulate: process.env.AUTOTRADER_SIMULATE === 'true'
     };
 
