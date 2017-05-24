@@ -1,0 +1,15 @@
+{
+  "name": "autotrader",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "kraken-api": "^0.1.7",
+    "lodash": "^4.17.4",
+    "moment": "^2.18.1",
+    "nedb": "^1.8.0"
+  }
+}
