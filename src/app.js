@@ -77,10 +77,24 @@ module.exports.startTrading = function startTrading() {
         })
     }
 
+    function getLastTrade(trades, pair) {
+        if (!pair) return trades[Object.keys(trades)[0]];
+
+        for (let trade in trades) {
+            if (trades.hasOwnProperty(trade)) {
+                return (trades[trade].pair === pair)
+                    ? trades[trade]
+                    : {};
+            }
+        }
+
+    }
+
     function makeProfit() {
         kraken.getTradesHistory((err, data) => {
             if (err) return log.error('There was a problem getting your trades history:', JSON.stringify(err));
-            const lastTrade = data.trades[Object.keys(data.trades)[0]];
+
+            const lastTrade = getLastTrade(data.trades, kraken.pair);
 
             if (lastTrade.pair !== kraken.pair) return log.error('We cannot continue, the last trade was for', lastTrade.pair, 'and we want', kraken.pair);
 
@@ -90,12 +104,12 @@ module.exports.startTrading = function startTrading() {
                 const availableAsset = data.filter((item) => item.name === config.asset).pop().amount;
                 const availableCurrency = data.filter((item) => item.name === config.currency).pop().amount;
 
-                if (availableCurrency > 0) {
+                if (lastTrade.type === 'sell' && availableCurrency > 0) {
                     // we need to buy some LTC
                     log.debug('Ok, we have', availableCurrency, config.currency, 'lets try to buy some', config.asset);
                     checkMarketAndAct('buy', availableCurrency, availableAsset, lastTrade);
                 }
-                if (availableAsset > 0) {
+                if (lastTrade.type === 'buy' && availableAsset > 0) {
                     // we need to sell some LTC
                     log.debug('Ok, we have', availableAsset, config.asset, 'lets try to sell them');
                     checkMarketAndAct('sell', availableCurrency, availableAsset, lastTrade);
@@ -115,7 +129,7 @@ module.exports.startTrading = function startTrading() {
                 log.debug('We have', docs.length, 'pending orders. Lets check its status before continue...');
                 docs.forEach(order => {
                     kraken.checkOrder(order.txid, (err, status) => {
-                        if (err) return log.error('There was an error checking the order status:', JSON.stringify(err))
+                        if (err) return log.error('There was an error checking the order status:', JSON.stringify(err));
 
                         if (status) {
                             log.debug('The order', order.txid, 'is closed now. We can delete it from database');
