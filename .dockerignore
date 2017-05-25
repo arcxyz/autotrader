@@ -3,3 +3,4 @@ node_modules
 Dockerfile
 *.iml
 .DS_Store
+build.sh
