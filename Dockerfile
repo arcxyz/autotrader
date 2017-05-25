@@ -1,4 +1,4 @@
-FROM node:6.10.3-slim
+FROM node:6.10.3-alpine
 WORKDIR /opt/app
 
 ADD . /opt/app
