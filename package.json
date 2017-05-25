@@ -1,10 +1,11 @@
 {
   "name": "autotrader",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "main": "index.js",
   "license": "MIT",
   "scripts": {
     "start": "node index.js",
+    "start:debug": "node --inspect --debug-brk index.js",
     "build": "docker build -t $npm_package_name:$npm_package_version ."
   },
   "dependencies": {
