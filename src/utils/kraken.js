@@ -132,13 +132,11 @@ Trader.prototype.getTrades = function (since, callback, descending) {
 };
 
 Trader.prototype.getTradesHistory = function (callback) {
-    var args = _.toArray(arguments);
-
     var process = function (err, trades) {
-        if (err || !trades)
-            callback(err);
+        if (err)
+            return callback(err.message);
         else
-            callback(null, trades.result);
+            return callback(null, trades.result);
     };
 
     this.kraken.api('TradesHistory', {}, _.bind(process, this));
