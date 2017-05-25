@@ -4,10 +4,10 @@ const Trader = require('./utils/kraken');
 const log = require('./utils/log');
 
 module.exports.startTrading = function startTrading() {
-    if(!process.env.AUTOTRADER_KRAKEN_SECRET) return log.error('Missing environment variable AUTOTRADER_KRAKEN_SECRET');
-    if(!process.env.AUTOTRADER_KRAKEN_KEY) return log.error('Missing environment variable AUTOTRADER_KRAKEN_KEY');
-    if(!process.env.AUTOTRADER_CURRENCY) return log.error('Missing environment variable AUTOTRADER_CURRENCY');
-    if(!process.env.AUTOTRADER_ASSET) return log.error('Missing environment variable AUTOTRADER_ASSET');
+    if (!process.env.AUTOTRADER_KRAKEN_SECRET) return log.error('Missing environment variable AUTOTRADER_KRAKEN_SECRET');
+    if (!process.env.AUTOTRADER_KRAKEN_KEY) return log.error('Missing environment variable AUTOTRADER_KRAKEN_KEY');
+    if (!process.env.AUTOTRADER_CURRENCY) return log.error('Missing environment variable AUTOTRADER_CURRENCY');
+    if (!process.env.AUTOTRADER_ASSET) return log.error('Missing environment variable AUTOTRADER_ASSET');
 
     const config = {
         // Exange configuration
@@ -50,17 +50,17 @@ module.exports.startTrading = function startTrading() {
         })
     }
 
-    function sell(availableLTC, price) {
-        log.debug('The current market meet the requirements We can sell', availableLTC, 'LTC', 'at', price);
-        !config.simulate && addOrder('sell', availableLTC, price);
+    function sell(availableAsset, price) {
+        log.debug('The current market meet the requirements We can sell', availableAsset, 'LTC', 'at', price);
+        !config.simulate && addOrder('sell', availableAsset, price);
     }
 
-    function buy(availableEUR, price) {
-        log.debug('The current market meet the requirements We can buy with', availableEUR, 'EUR at', price, 'EUR');
-        !config.simulate && addOrder('buy', availableEUR, price);
+    function buy(availableCurrency, price) {
+        log.debug('The current market meet the requirements We can buy with', availableCurrency, 'EUR at', price, 'EUR');
+        !config.simulate && addOrder('buy', availableCurrency, price);
     }
 
-    function checkMarketAndAct(action, availableEUR, availableLTC, lastTrade) {
+    function checkMarketAndAct(action, availableCurrency, availableAsset, lastTrade) {
 
         kraken.getTicker((err, data) => {
             if (err) return log.error('There was a problem getting the market status:', JSON.stringify(err));
@@ -70,8 +70,8 @@ module.exports.startTrading = function startTrading() {
             const canSell = (data.ask - lastTrade.price) > config.highDiff;
             const canBuy = (lastTrade.price - data.bid) > config.lowDiff;
 
-            if (action === 'sell' && canSell) return sell(availableLTC, data.ask);
-            if (action === 'buy' && canBuy) return buy(availableEUR, data.bid);
+            if (action === 'sell' && canSell) return sell(availableAsset, data.ask);
+            if (action === 'buy' && canBuy) return buy(availableCurrency, data.bid);
 
             log.debug('The current market does not meet the requirements we want. So we need to run another time.');
         })
@@ -79,6 +79,7 @@ module.exports.startTrading = function startTrading() {
 
     function makeProfit() {
         kraken.getTradesHistory((err, data) => {
+            if (err) return log.error('There was a problem getting your trades history:', JSON.stringify(err));
             const lastTrade = data.trades[Object.keys(data.trades)[0]];
 
             if (lastTrade.pair !== kraken.pair) return log.error('We cannot continue, the last trade was for', lastTrade.pair, 'and we want', kraken.pair);
@@ -86,23 +87,24 @@ module.exports.startTrading = function startTrading() {
             kraken.getPortfolio((err, data) => {
                 if (err) return log.error('There was an error getting funds', JSON.stringify(err));
 
-                const availableLTC = data.filter((item) => item.name === config.asset).pop().amount;
-                const availableEUR = data.filter((item) => item.name === config.currency).pop().amount;
+                const availableAsset = data.filter((item) => item.name === config.asset).pop().amount;
+                const availableCurrency = data.filter((item) => item.name === config.currency).pop().amount;
 
-                if (availableEUR > 0) {
+                if (availableCurrency > 0) {
                     // we need to buy some LTC
-                    log.debug('Ok, we have ' + availableEUR + ' EUR, lets try to buy some TLC...');
-                    checkMarketAndAct('buy', availableEUR, availableLTC, lastTrade);
+                    log.debug('Ok, we have', availableCurrency, config.currency, 'lets try to buy some', config.asset);
+                    checkMarketAndAct('buy', availableCurrency, availableAsset, lastTrade);
                 }
-                if (availableLTC > 0) {
+                if (availableAsset > 0) {
                     // we need to sell some LTC
-                    log.debug('Ok, we have ' + availableLTC + ' LTC, lets try to sell them...');
-                    checkMarketAndAct('sell', availableEUR, availableLTC, lastTrade);
+                    log.debug('Ok, we have', availableAsset, config.asset, 'lets try to sell them');
+                    checkMarketAndAct('sell', availableCurrency, availableAsset, lastTrade);
                 }
 
             })
         })
     }
+
     function getPendingOrders() {
         log.debug('Checking if there are pending orders...');
         dbTrades.find({status: 'pending'}, (err, docs) => {
